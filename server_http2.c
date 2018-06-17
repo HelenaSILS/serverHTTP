@@ -18,6 +18,7 @@ char webpage[] =
 "<html><headh><title>MaPagita</title>\r\n"
 "<style>body {background-color: #AA00A0 }</style></head>\r\n"
 "<body><center><h1>Never gonna give you up!</h1><br>\r\n"
+"<a href=\"pagina2.html\">Mais links</a>\r\n"
 "<p><img src=\"pizzaEP.png\"width=460 height=400></p></center></body></html>\r\n";
 
 int main(int argc, char *argv[]){
@@ -27,7 +28,7 @@ struct sockaddr_in  client_addr;
 socklen_t sin_len = sizeof(client_addr);
 int fd_server, fd_client;
 char buf[2048];
-int fdimg;
+int fdimg, fdpag;
 int on = 1;
 struct stat stat_buf;
 
@@ -49,7 +50,7 @@ while(1){
 	
 	if(!fork()){
 		//processo filho
-		close(fd_server);
+		//close(fd_server);
 		memset(buf, 0, 2048);
 		read(fd_client, buf, 2047);
 		printf("%s\n", buf);
@@ -60,15 +61,25 @@ while(1){
 			sendfile(fd_client, fdimg, NULL, stat_buf.st_size);
 			close(fdimg);		
 		}
+		else if(!strncmp(buf, "GET /pagina2.html", 16)){
+			fdpag = open("pagina2.html", O_RDONLY);
+			fstat(fdpag, &stat_buf);
+			sendfile(fd_client, fdpag, NULL, stat_buf.st_size);
+			close(fdpag);	
+
+		
+		}
 		else
 			write(fd_client, webpage, sizeof(webpage) -1);
+
+		close(fd_server);
 
 		close(fd_client);
 		printf("conexao fechada\n");
 		exit(0);
 	}
 
-	//processo filho
+	//processo pai
 	close(fd_client);
 }
 
@@ -78,4 +89,3 @@ while(1){
 
 return 0;
 }
-
